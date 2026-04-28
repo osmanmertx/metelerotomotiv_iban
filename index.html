@@ -19,16 +19,16 @@
     .container {
       max-width: 520px;
       margin: auto;
-      padding: 18px;
+      padding: 16px;
     }
 
     .header {
       background: #012c5f;
       color: white;
-      padding: 22px;
+      padding: 22px 16px;
       border-radius: 18px;
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     .header h1 {
@@ -37,17 +37,20 @@
     }
 
     .header p {
-      margin: 8px 0 0;
+      margin: 7px 0 0;
       font-size: 14px;
       opacity: .9;
     }
 
-    .title-box {
+    .title-box, .card, .note {
       background: white;
-      padding: 16px;
       border-radius: 16px;
-      margin-bottom: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    .title-box {
+      padding: 15px;
+      margin-bottom: 14px;
     }
 
     .label {
@@ -59,7 +62,7 @@
     .company {
       font-size: 18px;
       font-weight: bold;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     input {
@@ -67,30 +70,33 @@
       padding: 14px;
       border-radius: 14px;
       border: 1px solid #ddd;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #012c5f;
     }
 
     .card {
-      background: white;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      padding: 15px;
+      margin-bottom: 11px;
     }
 
     .bank {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: bold;
       color: #012c5f;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
 
     .iban {
       font-size: 17px;
       word-break: break-word;
-      margin-bottom: 12px;
-      letter-spacing: .5px;
+      letter-spacing: .4px;
+      margin-bottom: 10px;
+      cursor: pointer;
     }
 
     button {
@@ -103,12 +109,30 @@
       font-size: 15px;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 6px;
+    }
+
+    button.copied {
+      background: #198754;
+    }
+
+    .note {
+      padding: 13px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.4;
+      margin-top: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #666;
+      padding: 20px 0;
+      font-size: 15px;
     }
 
     .toast {
       position: fixed;
-      bottom: 20px;
+      bottom: 18px;
       left: 50%;
       transform: translateX(-50%);
       background: #111;
@@ -118,13 +142,6 @@
       display: none;
       font-size: 14px;
       z-index: 999;
-    }
-
-    .footer {
-      text-align: center;
-      color: #777;
-      font-size: 12px;
-      margin-top: 22px;
     }
   </style>
 </head>
@@ -138,20 +155,20 @@
 
     <div class="title-box">
       <div class="label">Alıcı Ünvanı</div>
-      <div class="company" id="companyName">Meteler Otomotiv İnşaat LTD. ŞTİ.</div>
-      <button onclick="copyText(document.getElementById('companyName').innerText)">Ünvanı Kopyala</button>
+      <div class="company" id="companyName">Meteler Otomotiv LTD. ŞTİ.</div>
+      <button onclick="copyText('Meteler Otomotiv LTD. ŞTİ.', this)">Ünvanı Kopyala</button>
     </div>
 
     <input type="text" id="searchInput" placeholder="Banka ara..." onkeyup="filterBanks()" />
 
     <div id="bankList"></div>
 
-    <div class="footer">
-      IBAN bilgileri ödeme öncesi kontrol edilmelidir.
+    <div class="note">
+      Ödeme yapmadan önce alıcı ünvanını ve IBAN bilgisini kontrol ediniz.
     </div>
   </div>
 
-  <div class="toast" id="toast">Kopyalandı</div>
+  <div class="toast" id="toast">Kopyalandı ✓</div>
 
   <script>
     const banks = [
@@ -175,23 +192,39 @@
     function renderBanks(list) {
       bankList.innerHTML = "";
 
+      if (list.length === 0) {
+        bankList.innerHTML = `<div class="empty">Banka bulunamadı.</div>`;
+        return;
+      }
+
       list.forEach(bank => {
         const card = document.createElement("div");
         card.className = "card";
 
         card.innerHTML = `
           <div class="bank">${bank.name}</div>
-          <div class="iban">${bank.iban}</div>
-          <button onclick="copyText('${bank.iban}')">IBAN Kopyala</button>
+          <div class="iban" onclick="copyText('${bank.iban}', this)">${bank.iban}</div>
+          <button onclick="copyText('${bank.iban}', this)">IBAN Kopyala</button>
         `;
 
         bankList.appendChild(card);
       });
     }
 
-    function copyText(text) {
+    function copyText(text, element) {
       navigator.clipboard.writeText(text).then(() => {
         showToast();
+
+        if (element && element.tagName === "BUTTON") {
+          const oldText = element.innerText;
+          element.innerText = "Kopyalandı ✓";
+          element.classList.add("copied");
+
+          setTimeout(() => {
+            element.innerText = oldText;
+            element.classList.remove("copied");
+          }, 1200);
+        }
       });
     }
 
@@ -201,14 +234,26 @@
 
       setTimeout(() => {
         toast.style.display = "none";
-      }, 1500);
+      }, 1200);
+    }
+
+    function normalizeText(text) {
+      return text
+        .toLocaleLowerCase("tr-TR")
+        .replaceAll("ı", "i")
+        .replaceAll("İ", "i")
+        .replaceAll("ş", "s")
+        .replaceAll("ğ", "g")
+        .replaceAll("ü", "u")
+        .replaceAll("ö", "o")
+        .replaceAll("ç", "c");
     }
 
     function filterBanks() {
-      const search = document.getElementById("searchInput").value.toLowerCase();
+      const search = normalizeText(document.getElementById("searchInput").value.trim());
 
       const filtered = banks.filter(bank =>
-        bank.name.toLowerCase().includes(search)
+        normalizeText(bank.name).startsWith(search)
       );
 
       renderBanks(filtered);
