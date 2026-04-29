@@ -1,1 +1,240 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KGM IBAN Bilgileri</title>
 
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      margin: 0;
+      background: #f3f6fb;
+      color: #111;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .header {
+      background: #012c5f;
+      color: white;
+      padding: 22px 16px;
+      border-radius: 18px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .header h1 { margin: 0; font-size: 24px; }
+
+    .title-box, .card, .note {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    .title-box {
+      padding: 15px;
+      margin-bottom: 14px;
+    }
+
+    .label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .company {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #ddd;
+      margin-bottom: 14px;
+      font-size: 16px;
+    }
+
+    .card {
+      padding: 15px;
+      margin-bottom: 11px;
+    }
+
+    .bank {
+      font-size: 19px;
+      font-weight: bold;
+      color: #012c5f;
+      margin-bottom: 7px;
+    }
+
+    .iban {
+      font-size: 17px;
+      word-break: break-word;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      padding: 13px;
+      border-radius: 12px;
+      background: #012c5f;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.copied {
+      background: #198754;
+    }
+
+    .note {
+      padding: 13px;
+      font-size: 13px;
+      color: #555;
+      margin-top: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #666;
+      padding: 20px 0;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 30px;
+      display: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>KGM Meteler</h1>
+    </div>
+
+    <div class="title-box">
+      <div class="label">Alıcı Ünvanı</div>
+      <div class="company">Meteler Otomotiv A.Ş.</div>
+      <button onclick="copyText('Meteler Otomotiv A.Ş.', this)">Ünvanı Kopyala</button>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Banka ara..." onkeyup="filterBanks()" />
+
+    <div id="bankList"></div>
+
+    <div class="note">
+      Ödeme yapmadan önce IBAN ve ünvanı kontrol ediniz.
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Kopyalandı ✓</div>
+
+  <script>
+    const banks = [
+      { name: "AKBANK", iban: "TR53 0004 6000 9988 8000 0020 93" },
+      { name: "İŞ BANKASI", iban: "TR92 0006 4000 0017 2000 0092 43" },
+      { name: "HALKBANK", iban: "TR68 0001 2009 6900 0010 260652" },
+      { name: "GARANTİ YENİ", iban: "TR69 0006 2000 5150 0006 289682" },
+      { name: "YKB YENİ", iban: "TR68 0006 7010 0000 0019 535353" },
+      { name: "FİNANSBANK", iban: "TR46 0011 1000 0000 0031 711793" },
+      { name: "VAKIFBANK", iban: "TR59 0001 5001 5800 7274 950962" },
+      { name: "VAKIF KATILIM", iban: "TR29 0021 0000 0001 0972 000001" },
+      { name: "ALBARAKA", iban: "TR06 0020 3000 0073 3349 000001" },
+      { name: "TEB", iban: "TR67 0003 2000 1950 0000 014618" },
+      { name: "ZİRAAT BANKASI", iban: "TR08 0001 0002 4860 0005 885007" },
+      { name: "TÜRKİYE FİNANS", iban: "TR59 0020 6000 6201 0368 8800 01" }
+    ];
+
+    const bankList = document.getElementById("bankList");
+
+    function renderBanks(list) {
+      bankList.innerHTML = "";
+
+      if (list.length === 0) {
+        bankList.innerHTML = `<div class="empty">Banka bulunamadı.</div>`;
+        return;
+      }
+
+      list.forEach(bank => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <div class="bank">${bank.name}</div>
+          <div class="iban" onclick="copyText('${bank.iban}', this)">${bank.iban}</div>
+          <button onclick="copyText('${bank.iban}', this)">IBAN Kopyala</button>
+        `;
+
+        bankList.appendChild(card);
+      });
+    }
+
+    function copyText(text, element) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast();
+
+        if (element && element.tagName === "BUTTON") {
+          const oldText = element.innerText;
+          element.innerText = "Kopyalandı ✓";
+          element.classList.add("copied");
+
+          setTimeout(() => {
+            element.innerText = oldText;
+            element.classList.remove("copied");
+          }, 1200);
+        }
+      });
+    }
+
+    function showToast() {
+      const toast = document.getElementById("toast");
+      toast.style.display = "block";
+      setTimeout(() => toast.style.display = "none", 1200);
+    }
+
+    function normalizeText(text) {
+      return text
+        .toLocaleLowerCase("tr-TR")
+        .replaceAll("ı", "i")
+        .replaceAll("ş", "s")
+        .replaceAll("ğ", "g")
+        .replaceAll("ü", "u")
+        .replaceAll("ö", "o")
+        .replaceAll("ç", "c");
+    }
+
+    function filterBanks() {
+      const search = normalizeText(document.getElementById("searchInput").value.trim());
+
+      const filtered = banks.filter(bank =>
+        normalizeText(bank.name).startsWith(search)
+      );
+
+      renderBanks(filtered);
+    }
+
+    renderBanks(banks);
+  </script>
+
+</body>
+</html>
