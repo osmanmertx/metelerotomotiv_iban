@@ -23,7 +23,6 @@
       padding: 16px;
     }
 
-    /* 🔥 HEADER TURUNCU */
     .header {
       background: linear-gradient(135deg, #F68645, #EB6627);
       color: white;
@@ -36,12 +35,6 @@
     .header h1 {
       margin: 0;
       font-size: 24px;
-    }
-
-    .header p {
-      margin: 7px 0 0;
-      font-size: 14px;
-      opacity: .9;
     }
 
     .title-box, .card, .note {
@@ -67,51 +60,34 @@
       margin-bottom: 10px;
     }
 
-    input {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid #ddd;
-      margin-bottom: 14px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    /* 🔥 INPUT FOCUS TURUNCU */
-    input:focus {
-      border-color: #EB6627;
-    }
-
     .card {
-      padding: 15px;
+      padding: 18px;
       margin-bottom: 11px;
     }
 
-    /* 🔥 BANKA BAŞLIK TURUNCU */
     .bank {
-      font-size: 19px;
+      font-size: 20px;
       font-weight: bold;
       color: #EB6627;
-      margin-bottom: 7px;
+      margin-bottom: 8px;
     }
 
     .iban {
-      font-size: 17px;
+      font-size: 18px;
       word-break: break-word;
-      letter-spacing: .4px;
-      margin-bottom: 10px;
+      letter-spacing: .5px;
+      margin-bottom: 12px;
       cursor: pointer;
     }
 
-    /* 🔥 BUTON TURUNCU */
     button {
       width: 100%;
       border: none;
-      padding: 13px;
+      padding: 14px;
       border-radius: 12px;
       background: linear-gradient(135deg, #F68645, #EB6627);
       color: white;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
     }
@@ -128,13 +104,6 @@
       margin-top: 14px;
     }
 
-    .empty {
-      text-align: center;
-      color: #666;
-      padding: 20px 0;
-      font-size: 15px;
-    }
-
     .toast {
       position: fixed;
       bottom: 18px;
@@ -146,13 +115,13 @@
       border-radius: 30px;
       display: none;
       font-size: 14px;
-      z-index: 999;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
+
     <div class="header">
       <h1>METLAS</h1>
       <p>Banka IBAN Bilgisi</p>
@@ -160,55 +129,38 @@
 
     <div class="title-box">
       <div class="label">Alıcı Ünvanı</div>
-      <div class="company">Metlas Oto Lastik LTD. ŞTi.</div>
-      <button onclick="copyText('Meteler Otomotiv LTD. ŞTİ.', this)">Ünvanı Kopyala</button>
+      <div class="company">Metlas Oto Lastik LTD. ŞTİ.</div>
+      <button onclick="copyText('Metlas Oto Lastik LTD. ŞTİ.', this)">Ünvanı Kopyala</button>
     </div>
 
-    <!-- 🔥 ARAMA KALDI AMA TEK IBAN VAR -->
-    <input type="text" id="searchInput" placeholder="Banka ara..." onkeyup="filterBanks()" />
-
-    <div id="bankList"></div>
+    <!-- 🔥 TEK IBAN KART -->
+    <div class="card">
+      <div class="bank">AKBANK</div>
+      <div class="iban" onclick="copyText('TR41 0004 6000 9988 8000 2502 41', this)">
+        TR41 0004 6000 9988 8000 2502 41
+      </div>
+      <button onclick="copyText('TR41 0004 6000 9988 8000 2502 41', this)">
+        IBAN Kopyala
+      </button>
+    </div>
 
     <div class="note">
       Ödeme yapmadan önce alıcı ünvanını ve IBAN bilgisini kontrol ediniz.
     </div>
+
   </div>
 
   <div class="toast" id="toast">Kopyalandı ✓</div>
 
   <script>
-    /* 🔥 TEK IBAN */
-    const banks = [
-      { name: "AKBANK", iban: "TR41 0004 6000 9988 8000 2502 41" }
-    ];
-
-    const bankList = document.getElementById("bankList");
-
-    function renderBanks(list) {
-      bankList.innerHTML = "";
-
-      if (list.length === 0) {
-        bankList.innerHTML = `<div class="empty">Banka bulunamadı.</div>`;
-        return;
-      }
-
-      list.forEach(bank => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-          <div class="bank">${bank.name}</div>
-          <div class="iban" onclick="copyText('${bank.iban}', this)">${bank.iban}</div>
-          <button onclick="copyText('${bank.iban}', this)">IBAN Kopyala</button>
-        `;
-
-        bankList.appendChild(card);
-      });
-    }
-
     function copyText(text, element) {
       navigator.clipboard.writeText(text).then(() => {
-        showToast();
+        const toast = document.getElementById("toast");
+        toast.style.display = "block";
+
+        setTimeout(() => {
+          toast.style.display = "none";
+        }, 1200);
 
         if (element && element.tagName === "BUTTON") {
           const oldText = element.innerText;
@@ -222,38 +174,6 @@
         }
       });
     }
-
-    function showToast() {
-      const toast = document.getElementById("toast");
-      toast.style.display = "block";
-
-      setTimeout(() => {
-        toast.style.display = "none";
-      }, 1200);
-    }
-
-    function normalizeText(text) {
-      return text
-        .toLocaleLowerCase("tr-TR")
-        .replaceAll("ı", "i")
-        .replaceAll("ş", "s")
-        .replaceAll("ğ", "g")
-        .replaceAll("ü", "u")
-        .replaceAll("ö", "o")
-        .replaceAll("ç", "c");
-    }
-
-    function filterBanks() {
-      const search = normalizeText(document.getElementById("searchInput").value.trim());
-
-      const filtered = banks.filter(bank =>
-        normalizeText(bank.name).startsWith(search)
-      );
-
-      renderBanks(filtered);
-    }
-
-    renderBanks(banks);
   </script>
 
 </body>
